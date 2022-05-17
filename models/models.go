@@ -1,9 +1,9 @@
 package models
 
 // schema of the film table
-type film struct {
-	film_id      int64  `json:"film_id"`
-	title        string `json:"title"`
-	description  string `json:"description"`
-	release_year int64  `json:"release_year"`
+type Film struct {
+	Film_id      int64  `json:"film_id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	Release_year int64  `json:"release_year"`
 }
