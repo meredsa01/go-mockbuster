@@ -31,7 +31,7 @@ const (
 // create connection with postgres db
 func createConnection() *sql.DB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=enable",
+		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 
 	// Open the connection
