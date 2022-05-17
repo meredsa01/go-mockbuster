@@ -53,7 +53,7 @@ func createConnection() *sql.DB {
 }
 
 // GetAllFilms will return all the films
-func GetFilms(w http.ResponseWriter, r *http.Request) {
+func GetAllFilms(w http.ResponseWriter, r *http.Request) {
 
 	// get all the films in the db
 	films, err := getAllFilms()
@@ -200,14 +200,14 @@ func GetFilms(w http.ResponseWriter, r *http.Request) {
 // }
 
 // get all films from the DB
-func getAllFilms() ([]models.film, error) {
+func getAllFilms() ([]models.Film, error) {
 	// create the postgres db connection
 	db := createConnection()
 
 	// close the db connection
 	defer db.Close()
 
-	var films []models.film
+	var films []models.Film
 
 	// create the select sql query
 	sqlStatement := `SELECT * FROM film`
@@ -224,10 +224,10 @@ func getAllFilms() ([]models.film, error) {
 
 	// iterate over the rows
 	for rows.Next() {
-		var film models.film
+		var film models.Film
 
 		// unmarshal the row object to film
-		err = rows.Scan(&film.film_id, &film.title, &film.description, &film.release_year)
+		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
