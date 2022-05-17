@@ -1,26 +1,16 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/meredsa01/go-mockbuster/router"
 )
 
 func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/", WelcomeHandler).Methods("GET")
-	http.ListenAndServe(":8080", r)
-}
+	r := router.Router()
 
-func WelcomeHandler(w http.ResponseWriter, r *http.Request) {
-	res, _ := json.Marshal(WelcomeResponse{Message: "Welcome to Mockbuster!"})
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(res)
-}
-
-type WelcomeResponse struct {
-	Message string `json:"message"`
+	fmt.Println("Starting server on port 8080...")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
