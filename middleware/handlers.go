@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json" // package to encode and decode the json into struct and vice versa
 	"fmt"           // models package where schema is defined
+	"github.com/meredsa01/go-mockbuster/models"
 	"log"
 	"net/http" // used to access the request and response object of the api
 
