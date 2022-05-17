@@ -21,7 +21,7 @@ type response struct {
 }
 
 const (
-	host     = "localhost"
+	host     = "127.0.0.1" // "localhost"
 	port     = 5432 // 5555
 	user     = "postgres"
 	password = "postgres"
