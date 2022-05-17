@@ -22,7 +22,7 @@ type response struct {
 
 const (
 	host     = "localhost"
-	port     = 5555
+	port     = 5432
 	user     = "postgres"
 	password = "postgres"
 	dbname   = "dvdrental"
