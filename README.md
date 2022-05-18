@@ -1,6 +1,6 @@
 # go-mockbuster
 
-API endpoints examples:
+API endpoint examples:
 
 List of all films
 http://localhost:8081/api/films
