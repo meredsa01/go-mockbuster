@@ -6,7 +6,9 @@ import (
 	"fmt"           // models package where schema is defined
 	"log"
 	"net/http" // used to access the request and response object of the api
+	"strings"
 
+	// used for string manipulation
 	"github.com/meredsa01/go-mockbuster/models"
 
 	"github.com/gorilla/mux" // used to get the params from the route
@@ -69,7 +71,7 @@ func GetAllFilms(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(films)
 }
 
-// GetFilmsByTitle will return films with given partial titles
+// GetFilmsByTitle will return films with given titles
 func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
 	// get the title from the request params, key is "title"
 	params := mux.Vars(r)
@@ -78,6 +80,24 @@ func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
 
 	// call the getUser function with user id to retrieve a single user
 	films, err := getFilmsByTitle(string(title))
+
+	if err != nil {
+		log.Fatalf("Unable to get user. %v", err)
+	}
+
+	// send the response
+	json.NewEncoder(w).Encode(films)
+}
+
+// GetFilmsByRating will return films with given rating
+func GetFilmsByRating(w http.ResponseWriter, r *http.Request) {
+	// get the title from the request params, key is "rating"
+	params := mux.Vars(r)
+
+	rating := params["rating"]
+
+	// call the getUser function with user id to retrieve a single user
+	films, err := getFilmsByRating(string(rating))
 
 	if err != nil {
 		log.Fatalf("Unable to get user. %v", err)
@@ -245,11 +265,63 @@ func getFilmsByTitle(title string) ([]models.Film, error) {
 	// create an array of models.Film type
 	var films []models.Film
 
+	title = strings.ToLower(title)
+
 	// create the select sql query
-	sqlStatement := `SELECT * FROM "film" WHERE title LIKE '%$1%'`
+	sqlStatement := `SELECT * FROM "film" WHERE LOWER(title) = $1`
 
 	// execute the sql statement
 	rows, err := db.Query(sqlStatement, title)
+
+	// iterate over the rows
+	for rows.Next() {
+		// create a film of models.Film type
+		var film models.Film
+		// unmarshal the row object to film
+		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year,
+			&film.Language_id, &film.Rental_duration, &film.Rental_rate, &film.Length,
+			&film.Replacement_cost, &film.Rating, &film.Last_update, &film.Special_features,
+			&film.Fulltext)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		// append the film in the films slice
+		films = append(films, film)
+	}
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return films, nil
+	case nil:
+		return films, nil
+	default:
+		log.Fatalf("Unable to scan the row. %v", err)
+	}
+
+	return films, err
+}
+
+// get films from the DB by rating
+func getFilmsByRating(rating string) ([]models.Film, error) {
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	//defer db.Close()
+
+	// create an array of models.Film type
+	var films []models.Film
+
+	rating = strings.ToLower(rating)
+
+	// create the select sql query
+	sqlStatement := `SELECT * FROM "film" WHERE LOWER(rating) = $1`
+
+	// execute the sql statement
+	rows, err := db.Query(sqlStatement, rating)
 
 	// iterate over the rows
 	for rows.Next() {
