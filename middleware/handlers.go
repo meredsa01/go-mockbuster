@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"encoding/json" // package to encode and decode the json into struct and vice versa
 	"fmt"           // models package where schema is defined
-	"github.com/meredsa01/go-mockbuster/models"
 	"log"
 	"net/http" // used to access the request and response object of the api
 
-	// package used to covert string into int type
-	// used to get the params from the route
+	"github.com/meredsa01/go-mockbuster/models"
 
-	_ "github.com/lib/pq" // postgres golang driver
+	"github.com/gorilla/mux" // used to get the params from the route
+	_ "github.com/lib/pq"    // postgres golang driver
 )
 
 // response format
@@ -22,34 +21,38 @@ type response struct {
 
 const (
 	host     = "localhost"
-	port     = 5432
+	port     = 5555
 	user     = "postgres"
 	password = "postgres"
 	dbname   = "dvdrental"
+	//DB_DSN = "postgres://postgres:postgres@localhost:5432/dvdrental?sslmode=disable"
 )
 
 // create connection with postgres db
 func createConnection() *sql.DB {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 
 	// Open the connection
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+	db, err := sql.Open("postgres", psqlconn)
+	CheckError(err)
+
+	//defer db.Close()
 
 	// check the connection
 	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
+	CheckError(err)
 
 	fmt.Println("Successfully connected!")
 	// return the connection
 	return db
+}
+
+func CheckError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetAllFilms will return all the films
@@ -63,6 +66,24 @@ func GetAllFilms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send all the users as response
+	json.NewEncoder(w).Encode(films)
+}
+
+// GetFilmsByTitle will return films with given partial titles
+func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
+	// get the title from the request params, key is "title"
+	params := mux.Vars(r)
+
+	title := params["title"]
+
+	// call the getUser function with user id to retrieve a single user
+	films, err := getFilmsByTitle(string(title))
+
+	if err != nil {
+		log.Fatalf("Unable to get user. %v", err)
+	}
+
+	// send the response
 	json.NewEncoder(w).Encode(films)
 }
 
@@ -165,52 +186,19 @@ func GetAllFilms(w http.ResponseWriter, r *http.Request) {
 // 	return id
 // }
 
-// // get one user from the DB by its userid
-// func getUser(id int64) (models.User, error) {
-// 	// create the postgres db connection
-// 	db := createConnection()
-
-// 	// close the db connection
-// 	defer db.Close()
-
-// 	// create a user of models.User type
-// 	var user models.User
-
-// 	// create the select sql query
-// 	sqlStatement := `SELECT * FROM users WHERE userid=$1`
-
-// 	// execute the sql statement
-// 	row := db.QueryRow(sqlStatement, id)
-
-// 	// unmarshal the row object to user
-// 	err := row.Scan(&user.ID, &user.Name, &user.Age, &user.Location)
-
-// 	switch err {
-// 	case sql.ErrNoRows:
-// 		fmt.Println("No rows were returned!")
-// 		return user, nil
-// 	case nil:
-// 		return user, nil
-// 	default:
-// 		log.Fatalf("Unable to scan the row. %v", err)
-// 	}
-
-// 	// return empty user on error
-// 	return user, err
-// }
-
 // get all films from the DB
 func getAllFilms() ([]models.Film, error) {
 	// create the postgres db connection
 	db := createConnection()
 
 	// close the db connection
-	defer db.Close()
+	//defer db.Close()
 
+	// create an array of models.Film type
 	var films []models.Film
 
 	// create the select sql query
-	sqlStatement := `SELECT * FROM film`
+	sqlStatement := `SELECT * FROM "film"`
 
 	// execute the sql statement
 	rows, err := db.Query(sqlStatement)
@@ -224,10 +212,14 @@ func getAllFilms() ([]models.Film, error) {
 
 	// iterate over the rows
 	for rows.Next() {
+		// create a film of models.Film type
 		var film models.Film
 
 		// unmarshal the row object to film
-		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year)
+		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year,
+			&film.Language_id, &film.Rental_duration, &film.Rental_rate, &film.Length,
+			&film.Replacement_cost, &film.Rating, &film.Last_update, &film.Special_features,
+			&film.Fulltext)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
@@ -239,6 +231,54 @@ func getAllFilms() ([]models.Film, error) {
 	}
 
 	// return empty film on error
+	return films, err
+}
+
+// get films from the DB by title
+func getFilmsByTitle(title string) ([]models.Film, error) {
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	//defer db.Close()
+
+	// create an array of models.Film type
+	var films []models.Film
+
+	// create the select sql query
+	sqlStatement := `SELECT * FROM "film" WHERE title LIKE '%$1%'`
+
+	// execute the sql statement
+	rows, err := db.Query(sqlStatement, title)
+
+	// iterate over the rows
+	for rows.Next() {
+		// create a film of models.Film type
+		var film models.Film
+		// unmarshal the row object to film
+		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year,
+			&film.Language_id, &film.Rental_duration, &film.Rental_rate, &film.Length,
+			&film.Replacement_cost, &film.Rating, &film.Last_update, &film.Special_features,
+			&film.Fulltext)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		// append the film in the films slice
+		films = append(films, film)
+	}
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return films, nil
+	case nil:
+		return films, nil
+	default:
+		log.Fatalf("Unable to scan the row. %v", err)
+	}
+
 	return films, err
 }
 
