@@ -27,3 +27,9 @@ http://localhost:8081/api/films/category/Music
 
 Film details for a given film_id
 http://localhost:8081/api/filmdetails/300
+
+
+Add a customer comment to a film
+localhost:8081/api/films/comment/{"comment_id":null,"film_id":1,"customer_id":1,"comment":"\"This\" isn't great!"}
+which converts to
+http://localhost:8081/api/films/comment/%7B%22comment_id%22:null,%22film_id%22:1,%22customer_id%22:1,%22comment%22:%22This%20isn't%20great!%22%7D
