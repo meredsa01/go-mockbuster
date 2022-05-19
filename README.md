@@ -20,6 +20,7 @@ http://localhost:8081/api/films/rating/R
 
 List of films filtered by category_id
 http://localhost:8081/api/films/categoryid/3
+
 or by category
 http://localhost:8081/api/films/category/animation
 http://localhost:8081/api/films/category/Music
