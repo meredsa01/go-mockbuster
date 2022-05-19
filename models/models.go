@@ -16,3 +16,37 @@ type Film struct {
 	Special_features string  `json:"speacial_features"`
 	Fulltext         string  `json:"fulltext"`
 }
+
+// schema of the film details
+type Film_details struct {
+	FilmBase   Film
+	Categories []Film_category
+	Language   string `json:"language"`
+	Actors     []Film_actor
+}
+
+type Film_category struct {
+	Category_id int64  `json:"category_id"`
+	Name        string `json:"name"`
+}
+
+type Category struct {
+	Category_id int64  `json:"category_id"`
+	Name        string `json:"name"`
+	Last_update string `json:"last_update"`
+}
+
+type Film_actor struct {
+	Actor_id   int64  `json:"actor_id"`
+	First_name string `json:"first_name"`
+	Last_name  string `json:"last_name"`
+}
+
+type Film_comment struct {
+	Comment_id  int64  `jason:"comment_id"`
+	Film_id     int64  `json:"film_id"`
+	Customer_id int64  `json:"customer_id"`
+	Comment     string `json:"comment"`
+	Last_update string `json:"last_update"`
+}
+
