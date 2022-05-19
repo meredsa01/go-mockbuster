@@ -6,8 +6,7 @@ import (
 	"fmt"           // models package where schema is defined
 	"net/http"      // used to access the request and response object of the api
 
-	// used for string manipulation
-	"strings"
+	"strings" // used for string manipulation
 
 	"github.com/meredsa01/go-mockbuster/models"
 
@@ -27,7 +26,6 @@ const (
 	user     = "postgres"
 	password = "postgres"
 	dbname   = "dvdrental"
-	//DB_DSN = "postgres://postgres:postgres@localhost:5432/dvdrental?sslmode=disable"
 )
 
 // create connection with postgres db
@@ -57,17 +55,17 @@ func CheckError(err error) {
 	}
 }
 
-// GetAllFilms will return all the films
+// GetAllFilms will return all films
 func GetAllFilms(w http.ResponseWriter, r *http.Request) {
 
-	// get all the films in the db
+	// get all films in the db
 	films, err := getAllFilms()
 
 	if err != nil {
 		fmt.Printf("Unable to get all films. %v", err)
 	}
 
-	// send all the users as response
+	// send all films as response
 	json.NewEncoder(w).Encode(films)
 }
 
@@ -78,7 +76,7 @@ func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
 
 	title := params["title"]
 
-	// call the getUser function with user id to retrieve a single user
+	// call the getFilmsByTitle function with title to retrieve films by title
 	films, err := getFilmsByTitle(string(title))
 
 	if err != nil {
@@ -145,7 +143,7 @@ func GetFilmsByCategory(w http.ResponseWriter, r *http.Request) {
 
 // GetFilmDetails will return a film's details
 func GetFilmDetails(w http.ResponseWriter, r *http.Request) {
-	// get the title from the request params, key is "title"
+	// get the id from the request params, key is "id"
 	params := mux.Vars(r)
 
 	id := params["id"]
@@ -258,7 +256,7 @@ func getAllFilms() ([]models.Film, error) {
 	return films, err
 }
 
-// get films from the DB by partial title
+// get films from the DB by partial or full title
 func getFilmsByTitle(title string) ([]models.Film, error) {
 	// create the postgres db connection
 	db := createConnection()
@@ -625,7 +623,7 @@ func insertComment(comment models.Film_comment) (int64, error) {
 	defer db.Close()
 
 	// create the insert sql query
-	// returning userid will return the id of the inserted user
+	// returning comment_id will return the id of the inserted comment
 	sqlStatement := `INSERT INTO film_comment (film_id, customer_id, comment) VALUES ($1, $2, $3) RETURNING comment_id`
 
 	// the inserted id will store in this id
@@ -700,4 +698,3 @@ func getCommentsByFilmID(id string) ([]models.Film_comment, error) {
 
 	return comments, err
 }
-
