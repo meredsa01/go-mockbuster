@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json" // package to encode and decode the json into struct and vice versa
 	"fmt"           // models package where schema is defined
-	"log"
-	"net/http" // used to access the request and response object of the api
-	"strings"
+	"net/http"      // used to access the request and response object of the api
 
 	// used for string manipulation
+	"strings"
+
 	"github.com/meredsa01/go-mockbuster/models"
 
 	"github.com/gorilla/mux" // used to get the params from the route
@@ -64,14 +64,14 @@ func GetAllFilms(w http.ResponseWriter, r *http.Request) {
 	films, err := getAllFilms()
 
 	if err != nil {
-		log.Fatalf("Unable to get all films. %v", err)
+		fmt.Printf("Unable to get all films. %v", err)
 	}
 
 	// send all the users as response
 	json.NewEncoder(w).Encode(films)
 }
 
-// GetFilmsByTitle will return films with given titles
+// GetFilmsByTitle will return films with given full or partial titles
 func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
 	// get the title from the request params, key is "title"
 	params := mux.Vars(r)
@@ -82,7 +82,7 @@ func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
 	films, err := getFilmsByTitle(string(title))
 
 	if err != nil {
-		log.Fatalf("Unable to get user. %v", err)
+		fmt.Printf("Unable to get films. %v", err)
 	}
 
 	// send the response
@@ -91,120 +91,124 @@ func GetFilmsByTitle(w http.ResponseWriter, r *http.Request) {
 
 // GetFilmsByRating will return films with given rating
 func GetFilmsByRating(w http.ResponseWriter, r *http.Request) {
-	// get the title from the request params, key is "rating"
+	// get the rating from the request params, key is "rating"
 	params := mux.Vars(r)
 
 	rating := params["rating"]
 
-	// call the getUser function with user id to retrieve a single user
+	// call the getFilmsByRating function with rating to retrieve films
 	films, err := getFilmsByRating(string(rating))
 
 	if err != nil {
-		log.Fatalf("Unable to get user. %v", err)
+		fmt.Printf("Unable to get films. %v", err)
 	}
 
 	// send the response
 	json.NewEncoder(w).Encode(films)
 }
 
-// // UpdateUser update user's detail in the postgres db
-// func UpdateUser(w http.ResponseWriter, r *http.Request) {
+// GetFilmsByCategoryID will return films with given category id
+func GetFilmsByCategoryID(w http.ResponseWriter, r *http.Request) {
+	// get the category id from the request params, key is "id"
+	params := mux.Vars(r)
 
-// 	// get the userid from the request params, key is "id"
-// 	params := mux.Vars(r)
+	id := params["id"]
 
-// 	// convert the id type from string to int
-// 	id, err := strconv.Atoi(params["id"])
+	// call the getFilmsByCategoryID function with id to retrieve films
+	films, err := getFilmsByCategoryID(string(id))
 
-// 	if err != nil {
-// 		log.Fatalf("Unable to convert the string into int.  %v", err)
-// 	}
+	if err != nil {
+		fmt.Printf("Unable to get films. %v", err)
+	}
 
-// 	// create an empty user of type models.User
-// 	var user models.User
+	// send the response
+	json.NewEncoder(w).Encode(films)
+}
 
-// 	// decode the json request to user
-// 	err = json.NewDecoder(r.Body).Decode(&user)
+// GetFilmsByCategory will return films with given category
+func GetFilmsByCategory(w http.ResponseWriter, r *http.Request) {
+	// get the category from the request params, key is "category"
+	params := mux.Vars(r)
 
-// 	if err != nil {
-// 		log.Fatalf("Unable to decode the request body.  %v", err)
-// 	}
+	category := params["category"]
 
-// 	// call update user to update the user
-// 	updatedRows := updateUser(int64(id), user)
+	// call the getFilmsByCategory function with category to retrieve films
+	films, err := getFilmsByCategory(string(category))
 
-// 	// format the message string
-// 	msg := fmt.Sprintf("User updated successfully. Total rows/record affected %v", updatedRows)
+	if err != nil {
+		fmt.Printf("Unable to get films. %v", err)
+	}
 
-// 	// format the response message
-// 	res := response{
-// 		ID:      int64(id),
-// 		Message: msg,
-// 	}
+	// send the response
+	json.NewEncoder(w).Encode(films)
+}
 
-// 	// send the response
-// 	json.NewEncoder(w).Encode(res)
-// }
+// GetFilmDetails will return a film's details
+func GetFilmDetails(w http.ResponseWriter, r *http.Request) {
+	// get the title from the request params, key is "title"
+	params := mux.Vars(r)
 
-// // DeleteUser delete user's detail in the postgres db
-// func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id := params["id"]
 
-// 	// get the userid from the request params, key is "id"
-// 	params := mux.Vars(r)
+	// call the getFilmDetails function with film id to retrieve a single film's details
+	filmdetails, err := getFilmDetails(string(id))
 
-// 	// convert the id in string to int
-// 	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		fmt.Printf("Unable to get film details. %v", err)
+	}
 
-// 	if err != nil {
-// 		log.Fatalf("Unable to convert the string into int.  %v", err)
-// 	}
+	// send the response
+	json.NewEncoder(w).Encode(filmdetails)
+}
 
-// 	// call the deleteUser, convert the int to int64
-// 	deletedRows := deleteUser(int64(id))
+// Create customer film comment
+func InsertComment(w http.ResponseWriter, r *http.Request) {
+	// get the comment from the request params
+	params := mux.Vars(r)
+	commentjson := params["comment"]
 
-// 	// format the message string
-// 	msg := fmt.Sprintf("User updated successfully. Total rows/record affected %v", deletedRows)
+	var err error
+	var comment models.Film_comment
 
-// 	// format the reponse message
-// 	res := response{
-// 		ID:      int64(id),
-// 		Message: msg,
-// 	}
+	err = json.Unmarshal([]byte(commentjson), &comment)
+	if err != nil {
+		fmt.Printf("Unable to get comment. %v", err)
+	}
 
-// 	// send the response
-// 	json.NewEncoder(w).Encode(res)
-// }
+	// call the insertComment function with comment from parameters
+	comment.Comment_id, err = insertComment(comment)
 
-// //------------------------- handler functions ----------------
-// // insert one user in the DB
-// func insertUser(user models.User) int64 {
+	if err != nil {
+		fmt.Printf("Error inserting comment. %v", err)
+	}
 
-// 	// create the postgres db connection
-// 	db := createConnection()
+	// format a response object
+	res := response{
+		ID:      comment.Comment_id,
+		Message: "Comment inserted successfully",
+	}
 
-// 	// close the db connection
-// 	defer db.Close()
+	// send the response
+	json.NewEncoder(w).Encode(res)
+}
 
-// 	// create the insert sql query
-// 	// returning userid will return the id of the inserted user
-// 	sqlStatement := `INSERT INTO users (name, location, age) VALUES ($1, $2, $3) RETURNING userid`
+// GetCommentsByFilmID will return comment with given film id
+func GetCommentsByFilmID(w http.ResponseWriter, r *http.Request) {
+	// get the film id from the request params, key is "id"
+	params := mux.Vars(r)
 
-// 	// the inserted id will store in this id
-// 	var id int64
+	id := params["film_id"]
 
-// 	// execute the sql statement
-// 	// Scan function will save the insert id in the id
-// 	err := db.QueryRow(sqlStatement, user.Name, user.Location, user.Age).Scan(&id)
+	// call the getCommentsByFilmID function with id to retrieve comments
+	films, err := getCommentsByFilmID(string(id))
 
-// 	if err != nil {
-// 		log.Fatalf("Unable to execute the query. %v", err)
-// 	}
+	if err != nil {
+		fmt.Printf("Unable to get comments. %v", err)
+	}
 
-// 	fmt.Printf("Inserted a single record %v", id)
-
-// 	// return the inserted id
-// 	return id
-// }
+	// send the response
+	json.NewEncoder(w).Encode(films)
+}
 
 // get all films from the DB
 func getAllFilms() ([]models.Film, error) {
@@ -212,7 +216,7 @@ func getAllFilms() ([]models.Film, error) {
 	db := createConnection()
 
 	// close the db connection
-	//defer db.Close()
+	defer db.Close()
 
 	// create an array of models.Film type
 	var films []models.Film
@@ -224,7 +228,7 @@ func getAllFilms() ([]models.Film, error) {
 	rows, err := db.Query(sqlStatement)
 
 	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
+		fmt.Printf("Unable to execute the query. %v", err)
 	}
 
 	// close the statement
@@ -242,7 +246,7 @@ func getAllFilms() ([]models.Film, error) {
 			&film.Fulltext)
 
 		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
+			fmt.Printf("Unable to scan the row. %v", err)
 		}
 
 		// append the film in the films slice
@@ -254,13 +258,13 @@ func getAllFilms() ([]models.Film, error) {
 	return films, err
 }
 
-// get films from the DB by title
+// get films from the DB by partial title
 func getFilmsByTitle(title string) ([]models.Film, error) {
 	// create the postgres db connection
 	db := createConnection()
 
 	// close the db connection
-	//defer db.Close()
+	defer db.Close()
 
 	// create an array of models.Film type
 	var films []models.Film
@@ -268,10 +272,13 @@ func getFilmsByTitle(title string) ([]models.Film, error) {
 	title = strings.ToLower(title)
 
 	// create the select sql query
-	sqlStatement := `SELECT * FROM "film" WHERE LOWER(title) = $1`
+	sqlStatement := `SELECT * FROM "film" WHERE LOWER(title) LIKE '%' || $1 || '%'`
 
 	// execute the sql statement
 	rows, err := db.Query(sqlStatement, title)
+
+	// close the statement
+	defer rows.Close()
 
 	// iterate over the rows
 	for rows.Next() {
@@ -284,7 +291,7 @@ func getFilmsByTitle(title string) ([]models.Film, error) {
 			&film.Fulltext)
 
 		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
+			fmt.Printf("Unable to scan the row. %v", err)
 		}
 
 		// append the film in the films slice
@@ -298,7 +305,7 @@ func getFilmsByTitle(title string) ([]models.Film, error) {
 	case nil:
 		return films, nil
 	default:
-		log.Fatalf("Unable to scan the row. %v", err)
+		fmt.Printf("Unable to scan the row. %v", err)
 	}
 
 	return films, err
@@ -310,18 +317,22 @@ func getFilmsByRating(rating string) ([]models.Film, error) {
 	db := createConnection()
 
 	// close the db connection
-	//defer db.Close()
+	defer db.Close()
 
 	// create an array of models.Film type
 	var films []models.Film
 
-	rating = strings.ToLower(rating)
+	// ratings are stored as uppercase
+	rating = strings.ToUpper(rating)
 
 	// create the select sql query
-	sqlStatement := `SELECT * FROM "film" WHERE LOWER(rating) = $1`
+	sqlStatement := `SELECT * FROM "film" f WHERE rating = $1`
 
 	// execute the sql statement
 	rows, err := db.Query(sqlStatement, rating)
+
+	// close the statement
+	defer rows.Close()
 
 	// iterate over the rows
 	for rows.Next() {
@@ -334,7 +345,7 @@ func getFilmsByRating(rating string) ([]models.Film, error) {
 			&film.Fulltext)
 
 		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
+			fmt.Printf("Unable to scan the row. %v", err)
 		}
 
 		// append the film in the films slice
@@ -348,70 +359,345 @@ func getFilmsByRating(rating string) ([]models.Film, error) {
 	case nil:
 		return films, nil
 	default:
-		log.Fatalf("Unable to scan the row. %v", err)
+		fmt.Printf("Unable to scan the row. %v", err)
 	}
 
 	return films, err
 }
 
-// // update user in the DB
-// func updateUser(id int64, user models.User) int64 {
+// get films from the DB by category id
+func getFilmsByCategoryID(id string) ([]models.Film, error) {
+	// create the postgres db connection
+	db := createConnection()
 
-// 	// create the postgres db connection
-// 	db := createConnection()
+	// close the db connection
+	defer db.Close()
 
-// 	// close the db connection
-// 	defer db.Close()
+	// create an array of models.Film type
+	var films []models.Film
 
-// 	// create the update sql query
-// 	sqlStatement := `UPDATE users SET name=$2, location=$3, age=$4 WHERE userid=$1`
+	// create the select sql query
+	sqlStatement := `SELECT f.* FROM "film_category" fc LEFT JOIN "film" f ON fc.film_id = f.film_id WHERE fc.category_id = $1`
 
-// 	// execute the sql statement
-// 	res, err := db.Exec(sqlStatement, id, user.Name, user.Location, user.Age)
+	// execute the sql statement
+	rows, err := db.Query(sqlStatement, id)
 
-// 	if err != nil {
-// 		log.Fatalf("Unable to execute the query. %v", err)
-// 	}
+	// close the statement
+	defer rows.Close()
 
-// 	// check how many rows affected
-// 	rowsAffected, err := res.RowsAffected()
+	// iterate over the rows
+	for rows.Next() {
+		// create a film of models.Film type
+		var film models.Film
+		// unmarshal the row object to film
+		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year,
+			&film.Language_id, &film.Rental_duration, &film.Rental_rate, &film.Length,
+			&film.Replacement_cost, &film.Rating, &film.Last_update, &film.Special_features,
+			&film.Fulltext)
 
-// 	if err != nil {
-// 		log.Fatalf("Error while checking the affected rows. %v", err)
-// 	}
+		if err != nil {
+			fmt.Printf("Unable to scan the row. %v", err)
+		}
 
-// 	fmt.Printf("Total rows/record affected %v", rowsAffected)
+		// append the film in the films slice
+		films = append(films, film)
+	}
 
-// 	return rowsAffected
-// }
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return films, nil
+	case nil:
+		return films, nil
+	default:
+		fmt.Printf("Unable to scan the row. %v", err)
+	}
 
-// // delete user in the DB
-// func deleteUser(id int64) int64 {
+	return films, err
+}
 
-// 	// create the postgres db connection
-// 	db := createConnection()
+// get films from the DB by category id
+func getFilmsByCategory(category string) ([]models.Film, error) {
+	// create the postgres db connection
+	db := createConnection()
 
-// 	// close the db connection
-// 	defer db.Close()
+	// close the db connection
+	defer db.Close()
 
-// 	// create the delete sql query
-// 	sqlStatement := `DELETE FROM users WHERE userid=$1`
+	// create an array of models.Film type
+	var films []models.Film
 
-// 	// execute the sql statement
-// 	res, err := db.Exec(sqlStatement, id)
+	// remove case for category
+	category = strings.ToLower(category)
 
-// 	if err != nil {
-// 		log.Fatalf("Unable to execute the query. %v", err)
-// 	}
+	// create the select sql query
+	sqlStatement := `SELECT f.* FROM "film_category" fc LEFT JOIN "category" c ON fc.category_id = c.category_id LEFT JOIN "film" f ON fc.film_id = f.film_id WHERE LOWER(c.name) = $1`
 
-// 	// check how many rows affected
-// 	rowsAffected, err := res.RowsAffected()
+	// execute the sql statement
+	rows, err := db.Query(sqlStatement, category)
 
-// 	if err != nil {
-// 		log.Fatalf("Error while checking the affected rows. %v", err)
-// 	}
+	// close the statement
+	defer rows.Close()
 
-// 	fmt.Printf("Total rows/record affected %v", rowsAffected)
+	// iterate over the rows
+	for rows.Next() {
+		// create a film of models.Film type
+		var film models.Film
+		// unmarshal the row object to film
+		err = rows.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year,
+			&film.Language_id, &film.Rental_duration, &film.Rental_rate, &film.Length,
+			&film.Replacement_cost, &film.Rating, &film.Last_update, &film.Special_features,
+			&film.Fulltext)
 
-// 	return rowsAffected
-// }
+		if err != nil {
+			fmt.Printf("Unable to scan the row. %v", err)
+		}
+
+		// append the film in the films slice
+		films = append(films, film)
+	}
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return films, nil
+	case nil:
+		return films, nil
+	default:
+		fmt.Printf("Unable to scan the row. %v", err)
+	}
+
+	return films, err
+}
+
+// get film details from the DB by id
+func getFilmDetails(id string) (models.Film_details, error) {
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	// create a variable of models.FilmDetails type
+	var filmdetails models.Film_details
+
+	// create the select sql query
+	sqlStatement := `SELECT * FROM "film" WHERE film_id = $1`
+
+	// execute the sql statement
+	row := db.QueryRow(sqlStatement, id)
+
+	// create a film of models.Film type
+	var film models.Film
+	// unmarshal the row object to film
+	err := row.Scan(&film.Film_id, &film.Title, &film.Description, &film.Release_year,
+		&film.Language_id, &film.Rental_duration, &film.Rental_rate, &film.Length,
+		&film.Replacement_cost, &film.Rating, &film.Last_update, &film.Special_features,
+		&film.Fulltext)
+
+	if err != nil {
+		fmt.Printf("Unable to scan the row. %v", err)
+	}
+
+	// set the film base
+	filmdetails.FilmBase = film
+
+	// create the select sql query
+	sqlStatement = `SELECT name language FROM "language" WHERE language_id = $1`
+
+	// execute the sql statement
+	row = db.QueryRow(sqlStatement, film.Language_id)
+
+	// create a language var
+	var language string
+	// unmarshal the row object to film
+	err = row.Scan(&language)
+
+	if err != nil {
+		fmt.Printf("Unable to scan the row. %v", err)
+	}
+
+	// set the film base
+	filmdetails.Language = language
+
+	// create the select sql query
+	sqlStatement = `SELECT c.category_id, c.name FROM "film_category" f LEFT JOIN "category" c ON f.category_id = c.category_id WHERE f.film_id = $1`
+
+	// execute the sql statement
+	rows, err := db.Query(sqlStatement, id)
+
+	if err != nil {
+		fmt.Printf("Unable to execute the query. %v", err)
+	}
+
+	// close the statement
+	defer rows.Close()
+
+	// iterate over the rows
+	for rows.Next() {
+		var category models.Film_category
+
+		// unmarshal the row object to user
+		err = rows.Scan(&category.Category_id, &category.Name)
+
+		if err != nil {
+			fmt.Printf("Unable to scan the row. %v", err)
+		}
+
+		// append the category in the film details slice
+		filmdetails.Categories = append(filmdetails.Categories, category)
+	}
+
+	// create the select sql query
+	sqlStatement = `SELECT a.actor_id, a.first_name, a.last_name FROM "film_actor" f LEFT JOIN "actor" a ON f.actor_id = a.actor_id WHERE f.film_id = $1`
+
+	// execute the sql statement
+	rows, err = db.Query(sqlStatement, id)
+
+	if err != nil {
+		fmt.Printf("Unable to execute the query. %v", err)
+	}
+
+	// close the statement
+	defer rows.Close()
+
+	// iterate over the rows
+	for rows.Next() {
+		var actor models.Film_actor
+
+		// unmarshal the row object to user
+		err = rows.Scan(&actor.Actor_id, &actor.First_name, &actor.Last_name)
+
+		if err != nil {
+			fmt.Printf("Unable to scan the row. %v", err)
+		}
+
+		// append the category in the film details slice
+		filmdetails.Actors = append(filmdetails.Actors, actor)
+	}
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return filmdetails, nil
+	case nil:
+		return filmdetails, nil
+	default:
+		fmt.Printf("Unable to scan the row. %v", err)
+	}
+
+	return filmdetails, err
+}
+
+func createCommentTable() {
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	createtable := `CREATE TABLE IF NOT EXISTS film_comment (
+		comment_id serial PRIMARY KEY NOT NULL ,
+		film_id integer NOT NULL ,
+		customer_id integer NOT NULL ,
+		comment varchar(1000) NOT NULL ,
+		last_update timestamp with time zone DEFAULT CURRENT_TIMESTAMP)`
+
+	stmt, err := db.Prepare(createtable)
+
+	defer stmt.Close()
+	_, err = stmt.Exec()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	//db.Close()
+}
+
+// insert a customer comment to a film
+func insertComment(comment models.Film_comment) (int64, error) {
+
+	createCommentTable()
+
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	// create the insert sql query
+	// returning userid will return the id of the inserted user
+	sqlStatement := `INSERT INTO film_comment (film_id, customer_id, comment) VALUES ($1, $2, $3) RETURNING comment_id`
+
+	// the inserted id will store in this id
+	var id int64
+
+	// execute the sql statement
+	// Scan function will save the insert id in the id
+	err := db.QueryRow(sqlStatement, comment.Film_id, comment.Customer_id, comment.Comment).Scan(&id)
+
+	if err != nil {
+		fmt.Printf("Unable to execute the query. %v", err)
+	}
+
+	fmt.Printf("Inserted a single record %v", id)
+
+	// return the inserted id
+	return id, err
+}
+
+// get comments from the DB by film id
+func getCommentsByFilmID(id string) ([]models.Film_comment, error) {
+
+	createCommentTable()
+
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	// create an array of models.Film_comment type
+	var comments []models.Film_comment
+
+	// create the select sql query
+	sqlStatement := `SELECT * FROM film_comment WHERE film_id = $1`
+
+	// execute the sql statement
+	rows, err := db.Query(sqlStatement, id)
+
+	if err != nil {
+		fmt.Printf("Unable to get comments. %v", err)
+	}
+
+	// close the statement
+	defer rows.Close()
+
+	// iterate over the rows
+	for rows.Next() {
+		// create a comment of models.Film_comment type
+		var comment models.Film_comment
+		// unmarshal the row object to film
+		err = rows.Scan(&comment.Comment_id, &comment.Film_id, &comment.Customer_id,
+			&comment.Comment, &comment.Last_update)
+
+		if err != nil {
+			fmt.Printf("Unable to scan the row. %v", err)
+		}
+
+		// append the comment in the comments slice
+		comments = append(comments, comment)
+	}
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return comments, nil
+	case nil:
+		return comments, nil
+	default:
+		fmt.Printf("Unable to scan the row. %v", err)
+	}
+
+	return comments, err
+}
+
